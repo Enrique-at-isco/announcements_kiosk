@@ -1,0 +1,13 @@
+{
+  "urls": [
+    "file:///home/annkiosk/announcements_kiosk/html/Weekly_Scoreboard_page.html",
+    "file:///home/annkiosk/announcements_kiosk/html/Attendance_page.html",
+    "file:///home/annkiosk/announcements_kiosk/html/New_Break_lunch_Schedule.htm",
+    "file:///home/annkiosk/announcements_kiosk/html/time_sheet_completion.html",
+    "file:///home/annkiosk/announcements_kiosk/html/QC_fails_scoreboard.html",
+    "file:///home/annkiosk/announcements_kiosk/html/Joke_of_the_day.html",
+    "https://time.is/clock",
+    "https://www.windy.com/32.146/-96.596?32.110,-96.596,12"
+  ],
+  "cycle_delay":10
+}
