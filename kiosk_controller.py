@@ -132,6 +132,10 @@ class KioskController:
         chrome_options.add_argument("--disable-session-crashed-bubble")
         chrome_options.add_argument("--disable-restore-session-state")
         
+        # Allow loading local file:// URLs
+        chrome_options.add_argument("--allow-file-access-from-files")
+        chrome_options.add_argument("--allow-file-access")
+        
         # Disable distracting features
         chrome_options.add_argument("--disable-features=TranslateUI")
         chrome_options.add_argument("--disable-pinch")
