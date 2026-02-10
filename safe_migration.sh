@@ -15,9 +15,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Check if we're in the right directory
-if [ ! -f "dig_bick_kiosk_v25.py" ]; then
-    echo -e "${RED}Error: Not in the correct directory${NC}"
+# Check if we're in the right directory (look for .git folder or any known file)
+if [ ! -d ".git" ] && [ ! -f "config.json" ]; then
+    echo -e "${RED}Error: Not in the announcements_kiosk directory${NC}"
     echo "Please cd to /home/annkiosk/announcements_kiosk first"
     exit 1
 fi
