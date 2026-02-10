@@ -18,7 +18,7 @@ if not CONFIG_FILE.exists():
     CONFIG_FILE = Path('./config.json')
 
 
-def generate_smartsheet_html(title, smartsheet_url, output_filename=None):
+def generate_smartsheet_html(title, smartsheet_url, output_filename=None, zoom=1.0):
     """
     Generate an HTML file for embedding a Smartsheet.
     
@@ -26,6 +26,7 @@ def generate_smartsheet_html(title, smartsheet_url, output_filename=None):
         title (str): The title to display in the header
         smartsheet_url (str): The Smartsheet published/embed URL
         output_filename (str): Optional custom filename (without .html extension)
+        zoom (float): Zoom level for the iframe (default: 1.0, use 0.8 for 80%, 1.2 for 120%)
         
     Returns:
         Path: Path to the generated HTML file
@@ -40,6 +41,10 @@ def generate_smartsheet_html(title, smartsheet_url, output_filename=None):
     
     # Create unique localStorage key from filename
     storage_key = output_filename.replace('.html', '_url').replace('/', '_')
+    
+    # Calculate iframe dimensions to compensate for zoom
+    iframe_width = int(100 / zoom)
+    iframe_height = int(100 / zoom)
     
     html_content = f'''<!DOCTYPE html>
 <html lang="en">
@@ -122,10 +127,11 @@ def generate_smartsheet_html(title, smartsheet_url, output_filename=None):
         }}
 
         .iframe-container iframe {{
-            width: 100%;
-            height: 100%;
+            width: {iframe_width}%;
+            height: {iframe_height}%;
             border: none;
-            transform-origin: center center;
+            transform: scale({zoom});
+            transform-origin: 0 0;
         }}
 
         #message {{
@@ -248,6 +254,15 @@ def generate_pdf_html(title, pdf_path, output_filename=None, scroll_speed=50):
     Returns:
         Path: Path to the generated HTML file
     """
+    # Convert file:// path to http://localhost:5000/pdfs/ URL
+    if pdf_path.startswith('file://'):
+        # Extract filename from file:// path
+        pdf_filename = pdf_path.split('/')[-1]
+        pdf_path = f'http://localhost:5000/pdfs/{pdf_filename}'
+    elif pdf_path.startswith('/home/annkiosk/pdfs/'):
+        # Convert absolute path to HTTP URL
+        pdf_filename = pdf_path.split('/')[-1]
+        pdf_path = f'http://localhost:5000/pdfs/{pdf_filename}'
     if output_filename is None:
         # Generate filename from title
         output_filename = title.lower().replace(' ', '_').replace('-', '_') + '_pdf'

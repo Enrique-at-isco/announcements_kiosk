@@ -202,26 +202,28 @@ def api_smartsheet_create():
         data = request.json
         title = data.get('title')
         url = data.get('url')
+        zoom = float(data.get('zoom', 1.0))  # Default zoom 100%
         add_to_config = data.get('add_to_config', False)
         
         if not title or not url:
             return jsonify({"success": False, "message": "Title and URL are required"}), 400
         
         # Generate HTML file
-        output_path = generate_smartsheet_html(title, url)
-        file_url = f"file://{output_path}"
+        output_path = generate_smartsheet_html(title, url, zoom=zoom)
+        # Use HTTP URL instead of file:// URL
+        http_url = f"http://localhost:5000/html/{output_path.name}"
         
         # Add to config if requested
         if add_to_config:
             config = load_config()
-            config['urls'].append(file_url)
+            config['urls'].append(http_url)
             save_config(config)
         
         return jsonify({
             "success": True,
             "message": f"Created {output_path.name}",
             "file_path": str(output_path),
-            "file_url": file_url,
+            "file_url": http_url,
             "added_to_config": add_to_config
         })
     except Exception as e:
@@ -241,21 +243,22 @@ def api_pdf_create():
         if not title or not pdf_path:
             return jsonify({"success": False, "message": "Title and PDF path are required"}), 400
         
-        # Generate HTML file
+        # Generate HTML file (will auto-convert file:// to http:// URLs)
         output_path = generate_pdf_html(title, pdf_path, scroll_speed=scroll_speed)
-        file_url = f"file://{output_path}"
+        # Use HTTP URL instead of file:// URL
+        http_url = f"http://localhost:5000/html/{output_path.name}"
         
         # Add to config if requested
         if add_to_config:
             config = load_config()
-            config['urls'].append(file_url)
+            config['urls'].append(http_url)
             save_config(config)
         
         return jsonify({
             "success": True,
             "message": f"Created {output_path.name}",
             "file_path": str(output_path),
-            "file_url": file_url,
+            "file_url": http_url,
             "added_to_config": add_to_config
         })
     except Exception as e:
@@ -367,6 +370,12 @@ def api_pdf_list():
 def serve_html(filename):
     """Serve HTML files from the html directory"""
     return send_from_directory(HTML_OUTPUT_DIR, filename)
+
+
+@app.route('/pdfs/<path:filename>')
+def serve_pdf(filename):
+    """Serve PDF files from the pdfs directory"""
+    return send_from_directory(PDF_UPLOAD_DIR, filename)
 
 
 if __name__ == '__main__':

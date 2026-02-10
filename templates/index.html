@@ -369,6 +369,11 @@
                     <input type="url" id="smartsheetUrl" placeholder="https://app.smartsheet.com/..." required>
                 </div>
                 <div class="form-group">
+                    <label>Zoom Level (%)</label>
+                    <input type="number" id="smartsheetZoom" min="30" max="200" value="100" step="5">
+                    <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">Adjust if content is cut off (80% = zoom out, 120% = zoom in)</small>
+                </div>
+                <div class="form-group">
                     <div class="checkbox-group">
                         <input type="checkbox" id="smartsheetAddToConfig" checked>
                         <label for="smartsheetAddToConfig" style="margin-bottom: 0;">Add to kiosk slideshow automatically</label>
@@ -606,13 +611,14 @@
             
             const title = document.getElementById('smartsheetTitle').value;
             const url = document.getElementById('smartsheetUrl').value;
+            const zoom = parseFloat(document.getElementById('smartsheetZoom').value) / 100; // Convert % to decimal
             const addToConfig = document.getElementById('smartsheetAddToConfig').checked;
             
             try {
                 const response = await fetch('/api/smartsheet/create', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({title, url, add_to_config: addToConfig})
+                    body: JSON.stringify({title, url, zoom, add_to_config: addToConfig})
                 });
                 
                 const data = await response.json();
@@ -621,6 +627,7 @@
                     showAlert(`✅ ${data.message}`, 'success');
                     document.getElementById('smartsheetTitle').value = '';
                     document.getElementById('smartsheetUrl').value = '';
+                    document.getElementById('smartsheetZoom').value = '100';
                     loadConfig();
                 } else {
                     showAlert(data.message, 'error');

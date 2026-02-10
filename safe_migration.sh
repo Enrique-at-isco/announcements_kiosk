@@ -1,4 +1,4 @@
-#!/bin/bash
+ps aux | grep web_manager#!/bin/bash
 # Safe Migration Script for Raspberry Pi Kiosk
 # Run this script on your Raspberry Pi to safely update to the new version
 
@@ -105,17 +105,23 @@ if [ ! -f "config.json" ] && [ -f "$BACKUP_DIR/config.json" ]; then
     cp "$BACKUP_DIR/config.json" ./
 fi
 
-# Restore pipiosk_v1 folder
+# Restore pipiosk_v1 folder (important: config.json is in here)
 if [ -d "$BACKUP_DIR/pipiosk_v1" ]; then
     echo "  - Restoring pipiosk_v1/ folder"
-    cp -r "$BACKUP_DIR/pipiosk_v1" ./
+    mkdir -p pipiosk_v1
+    # Copy config.json specifically (most important file)
+    if [ -f "$BACKUP_DIR/pipiosk_v1/config.json" ]; then
+        cp "$BACKUP_DIR/pipiosk_v1/config.json" pipiosk_v1/ 2>/dev/null || echo "    (config.json already in place)"
+    fi
+    # Try to copy other files, but don't fail if permission denied
+    cp -r "$BACKUP_DIR/pipiosk_v1/"* pipiosk_v1/ 2>/dev/null || echo "    (Some old script files skipped due to permissions - not critical)"
 fi
 
 # Restore html folder (merge with any new files)
 if [ -d "$BACKUP_DIR/html" ]; then
     echo "  - Restoring html/ folder"
     mkdir -p html
-    cp -r "$BACKUP_DIR/html/"* html/ 2>/dev/null || true
+    cp -r "$BACKUP_DIR/html/"* html/ 2>/dev/null || echo "    (Some files already exist)"
 fi
 
 echo -e "${GREEN}✓ Configuration restored${NC}"
