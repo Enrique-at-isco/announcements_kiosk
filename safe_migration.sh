@@ -69,12 +69,35 @@ git rm --quiet "slideshow_v1.py" 2>/dev/null || true
 echo -e "${GREEN}✓ Cleaned up old files${NC}"
 echo ""
 
-echo -e "${YELLOW}Step 3: Pulling latest code from GitHub...${NC}"
+echo -e "${YELLOW}Step 3: Temporarily moving files that might conflict...${NC}"
+# Move files that exist in both local and new repo
+TEMP_MOVE=()
+if [ -f "config.json" ]; then
+    mv config.json config.json.tmp
+    TEMP_MOVE+=("config.json")
+    echo "  - Moved config.json aside temporarily"
+fi
+
+echo -e "${GREEN}✓ Files moved${NC}"
+echo ""
+
+echo -e "${YELLOW}Step 4: Pulling latest code from GitHub...${NC}"
 git pull origin main
 echo -e "${GREEN}✓ Code updated${NC}"
 echo ""
 
-echo -e "${YELLOW}Step 4: Restoring your configuration...${NC}"
+echo -e "${YELLOW}Step 5: Restoring your files...${NC}"
+# Restore temporarily moved files, keeping YOUR version
+for file in "${TEMP_MOVE[@]}"; do
+    if [ -f "${file}.tmp" ]; then
+        mv -f "${file}.tmp" "${file}"
+        echo "  - Restored your ${file}"
+    fi
+done
+echo -e "${GREEN}✓ Files restored${NC}"
+echo ""
+
+echo -e "${YELLOW}Step 6: Ensuring your configuration is in place...${NC}"
 
 # Restore config.json if it exists in new repo
 if [ ! -f "config.json" ] && [ -f "$BACKUP_DIR/config.json" ]; then
@@ -98,7 +121,7 @@ fi
 echo -e "${GREEN}✓ Configuration restored${NC}"
 echo ""
 
-echo -e "${YELLOW}Step 5: Setting up new kiosk controller...${NC}"
+echo -e "${YELLOW}Step 7: Setting up new kiosk controller...${NC}"
 
 # Make scripts executable
 chmod +x kiosk_controller.py kiosk_manager.py html_generator.py
