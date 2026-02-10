@@ -4,17 +4,35 @@ A Raspberry Pi-based kiosk system that displays rotating announcements, scoreboa
 
 ## Features
 
+- 🌐 **Web-Based Management**: Full control from any device on your network
 - 📊 **Smartsheet Integration**: Display live Smartsheet data with custom titles
 - 📄 **PDF Viewer**: Show PDFs with dual-page view and auto-scrolling
 - 🌐 **Web Pages**: Display any web content (time, weather, custom sites)
 - 🔄 **Auto-Cycling**: Automatically rotate through content at configurable intervals
-- 🔧 **Easy Management**: CLI tools to add/remove content without editing code
+- 🔧 **Easy Management**: Web UI + CLI tools - no manual file editing needed
 - 🚀 **Auto-Start**: Runs on boot via systemd service
-- 📝 **Config Hot-Reload**: Detects config changes automatically (WIP)
+- 📝 **Live Logs**: Monitor kiosk status in real-time
 
 ## Quick Start
 
-### Creating Content
+### Web Manager (Recommended)
+
+**Start the web interface:**
+```bash
+cd /home/annkiosk/announcements_kiosk
+pip3 install flask
+python3 web_manager.py
+```
+
+**Access from any device on your network:**
+- Open browser: `http://<pi-ip-address>:5000`
+- Add/remove content with visual interface
+- Restart kiosk with one click
+- View live logs
+
+See [WEB_MANAGER_GUIDE.md](WEB_MANAGER_GUIDE.md) for details.
+
+### Command Line (Alternative)
 
 **Add a Smartsheet:**
 ```bash
@@ -49,22 +67,30 @@ sudo journalctl -u kiosk.service -f
 ```
 announcements_kiosk/
 ├── kiosk_controller.py          # Main kiosk controller (runs as service)
+├── web_manager.py               # 🌐 Web management interface (Flask app)
 ├── html_generator.py            # HTML page generation module
-├── kiosk_manager.py            # CLI tool for content management
-├── kiosk.service               # Systemd service file
-├── config.json                 # Configuration file
-├── html/                       # Generated HTML display pages
+├── kiosk_manager.py             # CLI tool for content management
+├── kiosk.service                # Systemd service file
+├── config.json                  # Configuration file (example)
+├── requirements.txt             # Python dependencies
+├── templates/                   # Web UI templates
+│   └── index.html
+├── html/                        # Generated HTML display pages
 │   ├── weekly_scoreboard.html
 │   ├── break_schedule.html
 │   └── ...
-├── KIOSK_MANAGER_GUIDE.md     # User guide for content management
-└── DEPLOYMENT_GUIDE.md        # Raspberry Pi deployment guide
+├── WEB_MANAGER_GUIDE.md        # Web interface user guide
+├── KIOSK_MANAGER_GUIDE.md      # CLI tool user guide
+├── DEPLOYMENT_GUIDE.md         # Raspberry Pi deployment guide
+└── MIGRATION.md                # Migration from old versions
 ```
 
 ## Documentation
 
-- **[Kiosk Manager Guide](KIOSK_MANAGER_GUIDE.md)** - How to create and manage content
+- **[Web Manager Guide](WEB_MANAGER_GUIDE.md)** - Web interface for managing content (recommended!)
+- **[Kiosk Manager Guide](KIOSK_MANAGER_GUIDE.md)** - CLI tool for content management
 - **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Raspberry Pi setup and service management
+- **[Migration Guide](MIGRATION.md)** - Upgrading from older versions
 
 ## Configuration
 
@@ -103,10 +129,13 @@ See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete setup instructions.
 - [x] PDF viewer with auto-scroll
 - [x] CLI content management tool
 - [x] Systemd service integration
-- [ ] Web-based management interface
-- [ ] Remote content management over network
+- [x] Web-based management interface
+- [x] Remote content management over network
+- [ ] Drag-and-drop URL reordering in web UI
 - [ ] Schedule-based content switching
 - [ ] Content preview before deployment
+- [ ] User authentication for web interface
+- [ ] Mobile app
 
 ## License
 
