@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosk Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-inactive {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #6b7280;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #f3f4f6;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .url-list {
+            list-style: none;
+        }
+
+        .url-item {
+            background: #f9fafb;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s;
+        }
+
+        .url-item:hover {
+            border-color: #667eea;
+        }
+
+        .url-info {
+            flex: 1;
+        }
+
+        .url-path {
+            font-size: 14px;
+            color: #6b7280;
+            word-break: break-all;
+        }
+
+        .url-index {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 15px;
+        }
+
+        .url-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .logs-container {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .config-info {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .config-info h3 {
+            margin-bottom: 15px;
+            color: #374151;
+        }
+
+        .config-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖥️ Kiosk Manager</h1>
+            <div class="status">
+                <span class="status-badge" id="serviceStatus">Loading...</span>
+                <button class="btn btn-primary" onclick="restartService()">🔄 Restart Kiosk</button>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('manage')">📋 Manage URLs</button>
+            <button class="tab" onclick="switchTab('smartsheet')">📊 Add Smartsheet</button>
+            <button class="tab" onclick="switchTab('pdf')">📄 Add PDF</button>
+            <button class="tab" onclick="switchTab('settings')">⚙️ Settings</button>
+            <button class="tab" onclick="switchTab('logs')">📝 Logs</button>
+        </div>
+
+        <!-- Manage URLs Tab -->
+        <div id="manage" class="tab-content active">
+            <h2 style="margin-bottom: 20px;">Current Display URLs</h2>
+            <div class="loading" id="manageLoading">Loading...</div>
+            <ul class="url-list" id="urlList"></ul>
+        </div>
+
+        <!-- Add Smartsheet Tab -->
+        <div id="smartsheet" class="tab-content">
+            <h2 style="margin-bottom: 20px;">Add Smartsheet Page</h2>
+            <form onsubmit="createSmartsheet(event)">
+                <div class="form-group">
+                    <label>Page Title</label>
+                    <input type="text" id="smartsheetTitle" placeholder="e.g., Weekly Scoreboard" required>
+                </div>
+                <div class="form-group">
+                    <label>Smartsheet Published URL</label>
+                    <input type="url" id="smartsheetUrl" placeholder="https://app.smartsheet.com/..." required>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="smartsheetAddToConfig" checked>
+                        <label for="smartsheetAddToConfig" style="margin-bottom: 0;">Add to kiosk slideshow automatically</label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">✨ Create Smartsheet Page</button>
+            </form>
+        </div>
+
+        <!-- Add PDF Tab -->
+        <div id="pdf" class="tab-content">
+            <h2 style="margin-bottom: 20px;">Add PDF Viewer</h2>
+            <form onsubmit="createPDF(event)">
+                <div class="form-group">
+                    <label>Page Title</label>
+                    <input type="text" id="pdfTitle" placeholder="e.g., Safety Manual" required>
+                </div>
+                <div class="form-group">
+                    <label>PDF File Path</label>
+                    <input type="text" id="pdfPath" placeholder="file:///home/annkiosk/pdfs/document.pdf" required>
+                    <small style="color: #6b7280; display: block; margin-top: 5px;">
+                        Use absolute path: file:///home/annkiosk/pdfs/yourfile.pdf
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Auto-scroll Speed (pixels/second)</label>
+                    <input type="number" id="pdfScrollSpeed" value="50" min="10" max="200">
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="pdfAddToConfig" checked>
+                        <label for="pdfAddToConfig" style="margin-bottom: 0;">Add to kiosk slideshow automatically</label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">✨ Create PDF Viewer</button>
+            </form>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <h2 style="margin-bottom: 20px;">Kiosk Settings</h2>
+            <div class="config-info">
+                <h3>Current Configuration</h3>
+                <div class="config-row">
+                    <strong>Cycle Delay:</strong>
+                    <span id="currentCycleDelay">40 seconds</span>
+                </div>
+                <div class="config-row">
+                    <strong>Total Pages:</strong>
+                    <span id="totalPages">0</span>
+                </div>
+            </div>
+            <form onsubmit="updateSettings(event)">
+                <div class="form-group">
+                    <label>Cycle Delay (seconds)</label>
+                    <input type="number" id="cycleDelay" min="5" max="300" required>
+                    <small style="color: #6b7280; display: block; margin-top: 5px;">
+                        How long to display each page before switching to the next
+                    </small>
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+            </form>
+        </div>
+
+        <!-- Logs Tab -->
+        <div id="logs" class="tab-content">
+            <h2 style="margin-bottom: 20px;">Kiosk Service Logs</h2>
+            <div style="margin-bottom: 15px;">
+                <button class="btn btn-secondary" onclick="loadLogs()">🔄 Refresh Logs</button>
+            </div>
+            <div class="logs-container" id="logsContainer">Loading logs...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfig = null;
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+            loadServiceStatus();
+            setInterval(loadServiceStatus, 5000); // Update status every 5 seconds
+        });
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load data for specific tabs
+            if (tabName === 'logs') {
+                loadLogs();
+            } else if (tabName === 'manage') {
+                loadConfig();
+            } else if (tabName === 'settings') {
+                loadConfig();
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                currentConfig = await response.json();
+                
+                displayURLList(currentConfig.urls);
+                updateSettingsDisplay(currentConfig);
+            } catch (error) {
+                showAlert('Error loading configuration: ' + error.message, 'error');
+            }
+        }
+
+        function displayURLList(urls) {
+            const list = document.getElementById('urlList');
+            const loading = document.getElementById('manageLoading');
+            
+            loading.classList.remove('show');
+            list.innerHTML = '';
+            
+            if (!urls || urls.length === 0) {
+                list.innerHTML = '<li style="text-align: center; color: #6b7280; padding: 40px;">No URLs in slideshow. Add some content!</li>';
+                return;
+            }
+            
+            urls.forEach((url, index) => {
+                const li = document.createElement('li');
+                li.className = 'url-item';
+                li.innerHTML = `
+                    <div class="url-index">${index + 1}</div>
+                    <div class="url-info">
+                        <div class="url-path">${url}</div>
+                    </div>
+                    <div class="url-actions">
+                        <button class="btn btn-danger btn-small" onclick="removeURL(${index})">🗑️ Remove</button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function updateSettingsDisplay(config) {
+            document.getElementById('currentCycleDelay').textContent = config.cycle_delay + ' seconds';
+            document.getElementById('totalPages').textContent = config.urls ? config.urls.length : 0;
+            document.getElementById('cycleDelay').value = config.cycle_delay || 40;
+        }
+
+        async function loadServiceStatus() {
+            try {
+                const response = await fetch('/api/service/status');
+                const data = await response.json();
+                
+                const badge = document.getElementById('serviceStatus');
+                badge.textContent = data.status.toUpperCase();
+                badge.className = 'status-badge ' + (data.status === 'active' ? 'status-active' : 'status-inactive');
+            } catch (error) {
+                console.error('Error loading service status:', error);
+            }
+        }
+
+        async function loadLogs() {
+            const container = document.getElementById('logsContainer');
+            container.textContent = 'Loading logs...';
+            
+            try {
+                const response = await fetch('/api/logs?lines=100');
+                const data = await response.json();
+                container.textContent = data.logs;
+            } catch (error) {
+                container.textContent = 'Error loading logs: ' + error.message;
+            }
+        }
+
+        async function removeURL(index) {
+            if (!confirm('Remove this URL from the slideshow?')) return;
+            
+            try {
+                const response = await fetch('/api/urls/remove', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({index})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    currentConfig = data.config;
+                    displayURLList(data.config.urls);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error removing URL: ' + error.message, 'error');
+            }
+        }
+
+        async function createSmartsheet(event) {
+            event.preventDefault();
+            
+            const title = document.getElementById('smartsheetTitle').value;
+            const url = document.getElementById('smartsheetUrl').value;
+            const addToConfig = document.getElementById('smartsheetAddToConfig').checked;
+            
+            try {
+                const response = await fetch('/api/smartsheet/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({title, url, add_to_config: addToConfig})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(`✅ ${data.message}`, 'success');
+                    document.getElementById('smartsheetTitle').value = '';
+                    document.getElementById('smartsheetUrl').value = '';
+                    loadConfig();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error creating Smartsheet page: ' + error.message, 'error');
+            }
+        }
+
+        async function createPDF(event) {
+            event.preventDefault();
+            
+            const title = document.getElementById('pdfTitle').value;
+            const pdf_path = document.getElementById('pdfPath').value;
+            const scroll_speed = parseInt(document.getElementById('pdfScrollSpeed').value);
+            const addToConfig = document.getElementById('pdfAddToConfig').checked;
+            
+            try {
+                const response = await fetch('/api/pdf/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({title, pdf_path, scroll_speed, add_to_config: addToConfig})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(`✅ ${data.message}`, 'success');
+                    document.getElementById('pdfTitle').value = '';
+                    document.getElementById('pdfPath').value = '';
+                    document.getElementById('pdfScrollSpeed').value = 50;
+                    loadConfig();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error creating PDF viewer: ' + error.message, 'error');
+            }
+        }
+
+        async function updateSettings(event) {
+            event.preventDefault();
+            
+            const cycleDelay = parseInt(document.getElementById('cycleDelay').value);
+            
+            if (!currentConfig) {
+                showAlert('Configuration not loaded', 'error');
+                return;
+            }
+            
+            currentConfig.cycle_delay = cycleDelay;
+            
+            try {
+                const response = await fetch('/api/config/update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(currentConfig)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('✅ Settings saved! Restart the kiosk to apply changes.', 'success');
+                    updateSettingsDisplay(currentConfig);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error saving settings: ' + error.message, 'error');
+            }
+        }
+
+        async function restartService() {
+            if (!confirm('Restart the kiosk display? It will reload with current configuration.')) return;
+            
+            try {
+                const response = await fetch('/api/service/restart', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('✅ Kiosk service restarted successfully!', 'success');
+                    setTimeout(loadServiceStatus, 2000);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error restarting service: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            
+            container.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 300);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
