@@ -363,6 +363,12 @@ def api_pdf_list():
         return jsonify({"files": [], "error": str(e)})
 
 
+@app.route('/html/<path:filename>')
+def serve_html(filename):
+    """Serve HTML files from the html directory"""
+    return send_from_directory(HTML_OUTPUT_DIR, filename)
+
+
 if __name__ == '__main__':
     # Run on all network interfaces so it's accessible from other devices
     app.run(host='0.0.0.0', port=5000, debug=True)
