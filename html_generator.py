@@ -441,10 +441,18 @@ def generate_pdf_html(title, pdf_path, output_filename=None, scroll_speed=50):
         async function renderAllPages() {{
             const wrapper = document.getElementById('pagesWrapper');
             
-            // Render pages in pairs
+            // Show loading progress
+            document.getElementById('loading').textContent = 'Rendering pages...';
+            document.getElementById('loading').style.display = 'block';
+            
+            // Render pages in pairs with progress updates
             for (let pageNum = 1; pageNum <= totalPages; pageNum += 2) {{
                 const pairDiv = document.createElement('div');
                 pairDiv.className = 'page-pair';
+                
+                // Update progress
+                document.getElementById('loading').textContent = 
+                    `Rendering page ${{pageNum}} of ${{totalPages}}...`;
                 
                 // Render left page
                 const canvas1 = await renderPage(pageNum);
@@ -457,14 +465,19 @@ def generate_pdf_html(title, pdf_path, output_filename=None, scroll_speed=50):
                 }}
                 
                 wrapper.appendChild(pairDiv);
+                
+                // Allow UI to update between page renders
+                await new Promise(resolve => setTimeout(resolve, 10));
             }}
             
+            document.getElementById('loading').style.display = 'none';
             updatePageInfo();
         }}
 
         async function renderPage(pageNum) {{
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({{ scale: 1.5 }});
+            // Reduced scale for faster rendering on Raspberry Pi (1.0 instead of 1.5)
+            const viewport = page.getViewport({{ scale: 1.0 }});
             
             const canvas = document.createElement('canvas');
             canvas.className = 'page-canvas';
