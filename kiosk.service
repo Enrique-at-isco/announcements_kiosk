@@ -1,0 +1,23 @@
+[Unit]
+Description=Kiosk Display Controller
+After=network.target graphical.target
+Wants=graphical.target
+
+[Service]
+Type=simple
+User=annkiosk
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/annkiosk/.Xauthority
+WorkingDirectory=/home/annkiosk/announcements_kiosk
+ExecStart=/usr/bin/python3 /home/annkiosk/announcements_kiosk/kiosk_controller.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=graphical.target
