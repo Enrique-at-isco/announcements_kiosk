@@ -381,6 +381,36 @@
         <!-- Add PDF Tab -->
         <div id="pdf" class="tab-content">
             <h2 style="margin-bottom: 20px;">Add PDF Viewer</h2>
+            
+            <!-- PDF Upload Section -->
+            <div style="background: #f0f9ff; border: 2px dashed #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                <h3 style="color: #1e40af; margin-bottom: 15px;">📤 Upload PDF File</h3>
+                <form onsubmit="uploadPDF(event)" id="uploadForm">
+                    <div class="form-group">
+                        <label>Select PDF File</label>
+                        <input type="file" id="pdfFile" accept=".pdf" required style="padding: 8px;">
+                        <small style="color: #6b7280; display: block; margin-top: 5px;">
+                            Maximum file size: 100MB
+                        </small>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="uploadBtn">📤 Upload PDF</button>
+                </form>
+                <div id="uploadProgress" style="display: none; margin-top: 15px;">
+                    <div style="background: #e5e7eb; border-radius: 4px; height: 20px; overflow: hidden;">
+                        <div id="uploadProgressBar" style="background: #3b82f6; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                    <small id="uploadStatus" style="color: #6b7280; display: block; margin-top: 5px;">Uploading...</small>
+                </div>
+            </div>
+            
+            <!-- Uploaded PDFs List -->
+            <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                <h3 style="margin-bottom: 15px;">📁 Uploaded PDFs</h3>
+                <div id="pdfFilesList">Loading...</div>
+            </div>
+            
+            <!-- Create PDF Viewer Form -->
+            <h3 style="margin-bottom: 15px;">🎨 Create PDF Viewer Page</h3>
             <form onsubmit="createPDF(event)">
                 <div class="form-group">
                     <label>Page Title</label>
@@ -390,7 +420,7 @@
                     <label>PDF File Path</label>
                     <input type="text" id="pdfPath" placeholder="file:///home/annkiosk/pdfs/document.pdf" required>
                     <small style="color: #6b7280; display: block; margin-top: 5px;">
-                        Use absolute path: file:///home/annkiosk/pdfs/yourfile.pdf
+                        Upload a PDF above, then copy its path here or select from the list
                     </small>
                 </div>
                 <div class="form-group">
@@ -450,6 +480,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadConfig();
             loadServiceStatus();
+            loadPDFList();
             setInterval(loadServiceStatus, 5000); // Update status every 5 seconds
         });
 
@@ -469,6 +500,8 @@
                 loadConfig();
             } else if (tabName === 'settings') {
                 loadConfig();
+            } else if (tabName === 'pdf') {
+                loadPDFList();
             }
         }
 
@@ -693,6 +726,127 @@
                 alert.classList.remove('show');
                 setTimeout(() => alert.remove(), 300);
             }, 5000);
+        }
+
+        async function uploadPDF(event) {
+            event.preventDefault();
+            
+            const fileInput = document.getElementById('pdfFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showAlert('Please select a PDF file', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const uploadProgressBar = document.getElementById('uploadProgressBar');
+            const uploadStatus = document.getElementById('uploadStatus');
+            
+            uploadBtn.disabled = true;
+            uploadProgress.style.display = 'block';
+            uploadProgressBar.style.width = '0%';
+            uploadStatus.textContent = 'Uploading...';
+            
+            try {
+                const xhr = new XMLHttpRequest();
+                
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        uploadProgressBar.style.width = percentComplete + '%';
+                        uploadStatus.textContent = `Uploading... ${Math.round(percentComplete)}%`;
+                    }
+                });
+                
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) {
+                            showAlert(`✅ ${data.message}`, 'success');
+                            fileInput.value = '';
+                            
+                            // Auto-fill the path in the form
+                            document.getElementById('pdfPath').value = data.url;
+                            
+                            // Reload PDF list
+                            loadPDFList();
+                        } else {
+                            showAlert(data.message, 'error');
+                        }
+                    } else {
+                        showAlert('Upload failed: ' + xhr.statusText, 'error');
+                    }
+                    
+                    uploadBtn.disabled = false;
+                    uploadProgress.style.display = 'none';
+                });
+                
+                xhr.addEventListener('error', () => {
+                    showAlert('Upload failed: Network error', 'error');
+                    uploadBtn.disabled = false;
+                    uploadProgress.style.display = 'none';
+                });
+                
+                xhr.open('POST', '/api/pdf/upload');
+                xhr.send(formData);
+            } catch (error) {
+                showAlert('Error uploading file: ' + error.message, 'error');
+                uploadBtn.disabled = false;
+                uploadProgress.style.display = 'none';
+            }
+        }
+
+        async function loadPDFList() {
+            const container = document.getElementById('pdfFilesList');
+            container.innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/pdf/list');
+                const data = await response.json();
+                
+                if (!data.files || data.files.length === 0) {
+                    container.innerHTML = '<p style="color: #6b7280; text-align: center;">No PDFs uploaded yet</p>';
+                    return;
+                }
+                
+                let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                data.files.forEach(file => {
+                    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    html += `
+                        <div style="background: white; padding: 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e5e7eb;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #374151;">${file.name}</div>
+                                <div style="font-size: 12px; color: #6b7280;">${sizeMB} MB • ${file.url}</div>
+                            </div>
+                            <button class="btn btn-primary btn-small" onclick="usePDF('${file.url}', '${file.name}')">Use This PDF</button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = '<p style="color: #ef4444;">Error loading PDFs: ' + error.message + '</p>';
+            }
+        }
+
+        function usePDF(url, filename) {
+            // Auto-fill the PDF path field
+            document.getElementById('pdfPath').value = url;
+            
+            // Suggest a title based on filename (remove .pdf extension)
+            const titleSuggestion = filename.replace('.pdf', '').replace(/_/g, ' ');
+            const currentTitle = document.getElementById('pdfTitle').value;
+            if (!currentTitle) {
+                document.getElementById('pdfTitle').value = titleSuggestion;
+            }
+            
+            showAlert(`📄 PDF selected: ${filename}`, 'success');
         }
     </script>
 </body>

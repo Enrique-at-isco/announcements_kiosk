@@ -10,6 +10,7 @@ import subprocess
 import os
 from pathlib import Path
 from datetime import datetime
+from werkzeug.utils import secure_filename
 from html_generator import (
     generate_smartsheet_html,
     generate_pdf_html,
@@ -19,9 +20,23 @@ from html_generator import (
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'kiosk-manager-secret-key-change-in-production'
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
+
+# PDF upload directory
+PDF_UPLOAD_DIR = Path('/home/annkiosk/pdfs')
+if not PDF_UPLOAD_DIR.exists():
+    PDF_UPLOAD_DIR = Path('./pdfs')  # Fallback for development
 
 # Ensure directories exist
 HTML_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+PDF_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'pdf'}
+
+
+def allowed_file(filename):
+    """Check if file has an allowed extension"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def load_config():
@@ -276,6 +291,66 @@ def api_html_files():
         files = []
         if HTML_OUTPUT_DIR.exists():
             for file in sorted(HTML_OUTPUT_DIR.glob('*.html')):
+                files.append({
+                    "name": file.name,
+                    "path": str(file),
+                    "url": f"file://{file}",
+                    "size": file.stat().st_size,
+                    "modified": datetime.fromtimestamp(file.stat().st_mtime).isoformat()
+                })
+        return jsonify({"files": files})
+    except Exception as e:
+        return jsonify({"files": [], "error": str(e)})
+
+
+@app.route('/api/pdf/upload', methods=['POST'])
+def api_pdf_upload():
+    """Upload a PDF file"""
+    try:
+        # Check if file is in request
+        if 'file' not in request.files:
+            return jsonify({"success": False, "message": "No file provided"}), 400
+        
+        file = request.files['file']
+        
+        # Check if filename is empty
+        if file.filename == '':
+            return jsonify({"success": False, "message": "No file selected"}), 400
+        
+        # Check if file type is allowed
+        if not allowed_file(file.filename):
+            return jsonify({"success": False, "message": "Only PDF files are allowed"}), 400
+        
+        # Secure the filename
+        filename = secure_filename(file.filename)
+        
+        # Save the file
+        file_path = PDF_UPLOAD_DIR / filename
+        file.save(str(file_path))
+        
+        # Get file info
+        file_size = file_path.stat().st_size
+        file_url = f"file://{file_path}"
+        
+        return jsonify({
+            "success": True,
+            "message": f"Uploaded {filename} successfully",
+            "filename": filename,
+            "path": str(file_path),
+            "url": file_url,
+            "size": file_size
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 400
+
+
+@app.route('/api/pdf/list')
+def api_pdf_list():
+    """List all uploaded PDF files"""
+    try:
+        files = []
+        if PDF_UPLOAD_DIR.exists():
+            for file in sorted(PDF_UPLOAD_DIR.glob('*.pdf')):
                 files.append({
                     "name": file.name,
                     "path": str(file),
