@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Handbook</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #525659;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #41a3db;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 32px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .pdf-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .pages-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1800px;
+        }
+
+        .page-pair {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .page-canvas {
+            background: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+        }
+
+        .controls button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            background: #0056b3;
+        }
+
+        #loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">EMPLOYEE HANDBOOK</div>
+    
+    <div id="loading">Loading PDF...</div>
+    
+    <div class="pdf-container" id="pdfContainer" style="display: none;">
+        <div class="pages-wrapper" id="pagesWrapper"></div>
+    </div>
+
+    <div class="controls">
+        <div>
+            <button onclick="toggleAutoScroll()">⏯ Toggle Scroll</button>
+            <button onclick="resetScroll()">⏮ Reset</button>
+        </div>
+        <div style="margin-top: 10px; font-size: 12px;">
+            <span id="pageInfo">Page 1-2 of ?</span>
+        </div>
+    </div>
+
+    <script>
+        const PDF_URL = 'file:///home/annkiosk/documents/handbook.pdf';
+        const SCROLL_SPEED = 40; // pixels per second
+        
+        let pdfDoc = null;
+        let totalPages = 0;
+        let isAutoScrolling = false;
+        let scrollInterval = null;
+        
+        // Set up PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        async function loadPDF() {
+            try {
+                pdfDoc = await pdfjsLib.getDocument(PDF_URL).promise;
+                totalPages = pdfDoc.numPages;
+                
+                console.log(`PDF loaded: ${totalPages} pages`);
+                
+                await renderAllPages();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('pdfContainer').style.display = 'flex';
+                
+                // Start auto-scrolling after a short delay
+                setTimeout(() => {
+                    startAutoScroll();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                document.getElementById('loading').textContent = 'Error loading PDF: ' + error.message;
+            }
+        }
+
+        async function renderAllPages() {
+            const wrapper = document.getElementById('pagesWrapper');
+            
+            // Render pages in pairs
+            for (let pageNum = 1; pageNum <= totalPages; pageNum += 2) {
+                const pairDiv = document.createElement('div');
+                pairDiv.className = 'page-pair';
+                
+                // Render left page
+                const canvas1 = await renderPage(pageNum);
+                pairDiv.appendChild(canvas1);
+                
+                // Render right page if it exists
+                if (pageNum + 1 <= totalPages) {
+                    const canvas2 = await renderPage(pageNum + 1);
+                    pairDiv.appendChild(canvas2);
+                }
+                
+                wrapper.appendChild(pairDiv);
+            }
+            
+            updatePageInfo();
+        }
+
+        async function renderPage(pageNum) {
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.5 });
+            
+            const canvas = document.createElement('canvas');
+            canvas.className = 'page-canvas';
+            const context = canvas.getContext('2d');
+            
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+            
+            return canvas;
+        }
+
+        function startAutoScroll() {
+            if (isAutoScrolling) return;
+            
+            isAutoScrolling = true;
+            const container = document.getElementById('pdfContainer');
+            
+            scrollInterval = setInterval(() => {
+                if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
+                    // Reached the bottom, reset to top
+                    container.scrollTop = 0;
+                } else {
+                    container.scrollTop += SCROLL_SPEED / 60; // 60 FPS
+                }
+                updatePageInfo();
+            }, 1000 / 60); // 60 FPS
+        }
+
+        function stopAutoScroll() {
+            isAutoScrolling = false;
+            if (scrollInterval) {
+                clearInterval(scrollInterval);
+                scrollInterval = null;
+            }
+        }
+
+        function toggleAutoScroll() {
+            if (isAutoScrolling) {
+                stopAutoScroll();
+            } else {
+                startAutoScroll();
+            }
+        }
+
+        function resetScroll() {
+            const container = document.getElementById('pdfContainer');
+            container.scrollTop = 0;
+            updatePageInfo();
+        }
+
+        function updatePageInfo() {
+            const container = document.getElementById('pdfContainer');
+            const scrollPercent = container.scrollTop / (container.scrollHeight - container.clientHeight);
+            const estimatedPage = Math.floor(scrollPercent * totalPages) + 1;
+            const nextPage = Math.min(estimatedPage + 1, totalPages);
+            
+            document.getElementById('pageInfo').textContent = 
+                `Page ${estimatedPage}-${nextPage} of ${totalPages}`;
+        }
+
+        // Load PDF on page load
+        window.addEventListener('DOMContentLoaded', loadPDF);
+        
+        // Pause scrolling when user manually scrolls
+        document.getElementById('pdfContainer').addEventListener('wheel', () => {
+            if (isAutoScrolling) {
+                stopAutoScroll();
+            }
+        });
+    </script>
+</body>
+</html>
