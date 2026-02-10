@@ -4,7 +4,7 @@ Kiosk Web Manager - Flask Web Application
 Provides a web interface for managing the kiosk display system
 """
 
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
 import json
 import subprocess
 import os
@@ -356,8 +356,8 @@ def api_pdf_list():
             for file in sorted(PDF_UPLOAD_DIR.glob('*.pdf')):
                 files.append({
                     "name": file.name,
-                    "path": str(file),
-                    "url": f"file://{file}",
+                    "path": file.name,  # Just the filename for HTML generation
+                    "url": f"http://localhost:5000/pdfs/{file.name}",  # HTTP URL for direct access
                     "size": file.stat().st_size,
                     "modified": datetime.fromtimestamp(file.stat().st_mtime).isoformat()
                 })
@@ -374,8 +374,13 @@ def serve_html(filename):
 
 @app.route('/pdfs/<path:filename>')
 def serve_pdf(filename):
-    """Serve PDF files from the pdfs directory"""
-    return send_from_directory(PDF_UPLOAD_DIR, filename)
+    """Serve PDF files from the pdfs directory with proper headers for PDF.js"""
+    response = make_response(send_from_directory(PDF_UPLOAD_DIR, filename))
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
 
 
 if __name__ == '__main__':

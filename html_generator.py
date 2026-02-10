@@ -254,15 +254,22 @@ def generate_pdf_html(title, pdf_path, output_filename=None, scroll_speed=50):
     Returns:
         Path: Path to the generated HTML file
     """
-    # Convert file:// path to http://localhost:5000/pdfs/ URL
+    # Convert any local file path to http://localhost:5000/pdfs/ URL
+    original_path = pdf_path
     if pdf_path.startswith('file://'):
         # Extract filename from file:// path
         pdf_filename = pdf_path.split('/')[-1]
         pdf_path = f'http://localhost:5000/pdfs/{pdf_filename}'
-    elif pdf_path.startswith('/home/annkiosk/pdfs/'):
+    elif pdf_path.startswith('/home/annkiosk/pdfs/') or pdf_path.startswith('/pdfs/'):
         # Convert absolute path to HTTP URL
         pdf_filename = pdf_path.split('/')[-1]
         pdf_path = f'http://localhost:5000/pdfs/{pdf_filename}'
+    elif not pdf_path.startswith('http://') and not pdf_path.startswith('https://'):
+        # Assume it's just a filename, convert to HTTP URL
+        pdf_filename = pdf_path if not '/' in pdf_path else pdf_path.split('/')[-1]
+        pdf_path = f'http://localhost:5000/pdfs/{pdf_filename}'
+    
+    print(f"PDF path conversion: {original_path} -> {pdf_path}")
     if output_filename is None:
         # Generate filename from title
         output_filename = title.lower().replace(' ', '_').replace('-', '_') + '_pdf'
@@ -399,6 +406,7 @@ def generate_pdf_html(title, pdf_path, output_filename=None, scroll_speed=50):
 
         async function loadPDF() {{
             try {{
+                console.log('Loading PDF from:', PDF_URL);
                 pdfDoc = await pdfjsLib.getDocument(PDF_URL).promise;
                 totalPages = pdfDoc.numPages;
                 
@@ -416,7 +424,17 @@ def generate_pdf_html(title, pdf_path, output_filename=None, scroll_speed=50):
                 
             }} catch (error) {{
                 console.error('Error loading PDF:', error);
-                document.getElementById('loading').textContent = 'Error loading PDF: ' + error.message;
+                document.getElementById('loading').innerHTML = `
+                    <div style="color: #ff6b6b; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+                        <h3>Error loading PDF</h3>
+                        <p><strong>URL:</strong> ${{PDF_URL}}</p>
+                        <p><strong>Error:</strong> ${{error.message}}</p>
+                        <p style="font-size: 14px; margin-top: 15px;">
+                            Make sure the web manager service is running:<br>
+                            <code>sudo systemctl status kiosk-web.service</code>
+                        </p>
+                    </div>
+                `;
             }}
         }}
 
